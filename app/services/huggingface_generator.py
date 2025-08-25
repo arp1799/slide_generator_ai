@@ -1,5 +1,11 @@
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
-import torch
+try:
+    from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
+    import torch
+    TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    TRANSFORMERS_AVAILABLE = False
+    print("⚠️  Transformers not available, using mock content generation")
+
 from typing import List
 import json
 from app.models.slide_models import SlideLayout, SlideContent
@@ -7,6 +13,10 @@ from app.models.slide_models import SlideLayout, SlideContent
 
 class HuggingFaceGenerator:
     def __init__(self):
+        if not TRANSFORMERS_AVAILABLE:
+            self.generator = None
+            return
+            
         self.model_name = "microsoft/DialoGPT-medium"  # Lightweight model for quick responses
         self.tokenizer = None
         self.model = None

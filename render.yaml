@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: slide-generator-api
+    name: slide-generator-ai
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
@@ -18,5 +18,7 @@ services:
         value: /opt/render/project/src/samples
       - key: LOG_LEVEL
         value: INFO
+      - key: ENVIRONMENT
+        value: production
     healthCheckPath: /api/v1/health
     autoDeploy: true 
