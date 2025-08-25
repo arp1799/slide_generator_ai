@@ -4,7 +4,7 @@ try:
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
-    print("⚠️  Transformers not available, using mock content generation")
+    print("⚠️  Transformers not available - install with: pip install -r requirements-huggingface.txt")
 
 from typing import List
 import json

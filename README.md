@@ -52,7 +52,11 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 ### 3. Install Dependencies
 ```bash
+# Install core dependencies
 pip install -r requirements.txt
+
+# Optional: Install Hugging Face dependencies for fallback AI generation
+pip install -r requirements-huggingface.txt
 ```
 
 ### 4. Environment Configuration

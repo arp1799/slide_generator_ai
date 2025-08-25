@@ -1,0 +1,4 @@
+# Hugging Face dependencies (optional)
+# Install with: pip install -r requirements-huggingface.txt
+transformers>=4.35.0
+torch>=2.5.0 
