@@ -59,9 +59,9 @@ git push -u origin main
 1. **Go to Render.com** and sign in
 2. **Click "New +"** → **"Web Service"**
 3. **Connect your GitHub repository**
-4. **Select the `slide-generator-api` repository**
+4. **Select the `slide_generator_ai` repository**
 5. **Configure the service**:
-   - **Name**: `slide-generator-api`
+   - **Name**: `slide-generator-ai`
    - **Environment**: `Python 3`
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
