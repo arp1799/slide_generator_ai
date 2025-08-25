@@ -4,6 +4,7 @@ import json
 from app.core.config import settings
 from app.models.slide_models import SlideLayout, SlideContent
 from app.services.huggingface_generator import HuggingFaceGenerator
+from app.services.content_cache import ContentCache
 import os
 
 
@@ -20,14 +21,33 @@ class ContentGenerator:
         
         # Initialize Hugging Face generator as fallback
         self.hf_generator = HuggingFaceGenerator()
+        
+        # Initialize content cache
+        self.content_cache = ContentCache()
     
     async def generate_slide_content(self, topic: str, num_slides: int, layout_preference: List[SlideLayout] = None) -> List[SlideContent]:
-        """Generate slide content using OpenAI API"""
+        """Generate slide content using OpenAI API with caching"""
+        
+        # Check cache first
+        cached_content = self.content_cache.get_cached_content(topic, num_slides, layout_preference)
+        if cached_content:
+            return cached_content
+        
+        # If no cache hit, check if we should generate variation content
+        import random
+        if random.random() < 0.3:  # 30% chance to generate variation content
+            print(f"🎲 Generating variation content for topic: {topic}")
+            variation_content = self.content_cache.generate_variation_content(topic, num_slides, layout_preference)
+            self.content_cache.cache_content(topic, num_slides, layout_preference, variation_content)
+            return variation_content
         
         if not self.openai_client:
             # Fallback to Hugging Face model for demo purposes
             print("🔄 No OpenAI API key found, using Hugging Face model...")
-            return await self.hf_generator.generate_slide_content(topic, num_slides, layout_preference)
+            content = await self.hf_generator.generate_slide_content(topic, num_slides, layout_preference)
+            # Cache the generated content
+            self.content_cache.cache_content(topic, num_slides, layout_preference, content)
+            return content
         
         try:
             # Create a structured prompt for slide generation
@@ -50,13 +70,21 @@ class ContentGenerator:
             )
             
             content = response.choices[0].message.content
-            return self._parse_slide_content(content, num_slides, layout_preference)
+            generated_content = self._parse_slide_content(content, num_slides, layout_preference)
+            
+            # Cache the generated content
+            self.content_cache.cache_content(topic, num_slides, layout_preference, generated_content)
+            
+            return generated_content
             
         except Exception as e:
             print(f"Error generating content with OpenAI: {e}")
             # Fallback to Hugging Face model
             print("🔄 Falling back to Hugging Face model...")
-            return await self.hf_generator.generate_slide_content(topic, num_slides, layout_preference)
+            content = await self.hf_generator.generate_slide_content(topic, num_slides, layout_preference)
+            # Cache the generated content
+            self.content_cache.cache_content(topic, num_slides, layout_preference, content)
+            return content
     
     def _create_slide_prompt(self, topic: str, num_slides: int, layout_preference: List[SlideLayout] = None) -> str:
         """Create a structured prompt for slide generation"""

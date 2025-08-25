@@ -19,6 +19,7 @@ from app.services.presentation_generator import PresentationGenerator
 from app.services.file_storage import file_storage
 from app.services.topic_data_service import TopicDataService
 from app.services.image_generator import ImageGenerator
+from app.services.content_cache import ContentCache
 from app.core.config import settings
 
 router = APIRouter()
@@ -26,6 +27,7 @@ content_generator = ContentGenerator()
 presentation_generator = PresentationGenerator()
 topic_data_service = TopicDataService()
 image_generator = ImageGenerator()
+content_cache = ContentCache()
 
 
 @router.get("/health", response_model=HealthCheckResponse)
@@ -283,4 +285,34 @@ async def get_image_suggestions(topic: str):
     return {
         "topic": topic,
         "suggestions": suggestions
+    }
+
+
+@router.get("/cache/stats")
+async def get_cache_stats():
+    """Get cache statistics"""
+    stats = content_cache.get_cache_stats()
+    return stats
+
+
+@router.delete("/cache/clear")
+async def clear_cache():
+    """Clear all cached content"""
+    content_cache.clear_cache()
+    return {"message": "Cache cleared successfully"}
+
+
+@router.get("/cache/status")
+async def get_cache_status():
+    """Get cache status and information"""
+    stats = content_cache.get_cache_stats()
+    return {
+        "cache_enabled": True,
+        "cache_directory": stats.get("cache_directory", "cache"),
+        "total_entries": stats.get("total_cache_entries", 0),
+        "valid_entries": stats.get("valid_cache_entries", 0),
+        "cache_size_mb": round(stats.get("total_cache_size_bytes", 0) / (1024 * 1024), 2),
+        "max_cache_size": stats.get("max_cache_size", 1000),
+        "cache_ttl_hours": stats.get("cache_ttl_hours", 24),
+        "variation_generation": "Enabled (30% chance for new variations)"
     } 

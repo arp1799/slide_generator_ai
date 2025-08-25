@@ -226,26 +226,24 @@ class PresentationGenerator:
         if slide_content.image_url:
             # Try to add actual image
             try:
-                # Create a placeholder with image URL info
-                placeholder = slide.shapes.add_shape(
-                    MSO_SHAPE.RECTANGLE,
+                # Download and embed the actual image
+                import requests
+                from io import BytesIO
+                
+                print(f"🖼️ Downloading image from: {slide_content.image_url}")
+                response = requests.get(slide_content.image_url, timeout=10)
+                response.raise_for_status()
+                
+                # Add the actual image to the slide
+                image_stream = BytesIO(response.content)
+                slide.shapes.add_picture(
+                    image_stream,
                     Inches(5.5), Inches(2), Inches(3), Inches(4)
                 )
-                placeholder.fill.solid()
-                placeholder.fill.fore_color.rgb = theme_colors['primary_color']
                 
-                # Add image URL info
-                placeholder_textbox = slide.shapes.add_textbox(Inches(5.5), Inches(2), Inches(3), Inches(4))
-                placeholder_frame = placeholder_textbox.text_frame
-                placeholder_frame.text = f"[Image Loaded]\nSource: {slide_content.image_url[:50]}..."
-                placeholder_frame.paragraphs[0].font.name = body_font
-                placeholder_frame.paragraphs[0].font.size = Pt(body_size - 2)
-                placeholder_frame.paragraphs[0].font.color.rgb = theme_colors['background_color']
-                placeholder_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
-                
-                print(f"🖼️ Added image for slide: {slide_content.title}")
+                print(f"✅ Successfully embedded image for slide: {slide_content.title}")
             except Exception as e:
-                print(f"⚠️ Error adding image: {e}")
+                print(f"⚠️ Error downloading/embedding image: {e}")
                 self._add_image_placeholder(slide, slide_content, theme_colors, body_font, body_size)
         elif slide_content.image_placeholder:
             self._add_image_placeholder(slide, slide_content, theme_colors, body_font, body_size)
