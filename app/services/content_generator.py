@@ -156,54 +156,61 @@ class ContentGenerator:
         
         layouts = layout_preference or [SlideLayout.TITLE, SlideLayout.BULLET_POINTS, SlideLayout.TWO_COLUMN]
         
+        # Ensure we have enough layouts for the number of slides
+        available_layouts = layouts.copy()
+        if len(available_layouts) < num_slides:
+            # Cycle through available layouts
+            while len(available_layouts) < num_slides:
+                available_layouts.extend(layouts)
+        
         slides = []
         
-        # Title slide
+        # Title slide (always first)
         slides.append(SlideContent(
-            title=f"{topic} - Presentation",
-            content=f"An overview of {topic}",
+            title=f"{topic} - Comprehensive Overview",
+            content=f"An in-depth exploration of {topic}",
             layout=SlideLayout.TITLE
         ))
         
-        # Content slides
-        for i in range(1, min(num_slides, 4)):
-            if i == 1:
+        # Content slides using only the specified layouts
+        for i in range(1, num_slides):
+            layout = available_layouts[i % len(available_layouts)]
+            
+            if layout == SlideLayout.BULLET_POINTS:
                 slides.append(SlideContent(
-                    title=f"Introduction to {topic}",
+                    title=f"Understanding {topic}",
                     bullet_points=[
                         f"Definition and scope of {topic}",
                         "Historical background and development",
                         "Current trends and applications",
                         "Future prospects and challenges"
                     ],
+                    layout=layout
+                ))
+            elif layout == SlideLayout.TWO_COLUMN:
+                slides.append(SlideContent(
+                    title=f"{topic} Technologies and Applications",
+                    left_column="Core Technologies:\n\n• Fundamental concepts\n• Basic terminology\n• Essential frameworks\n• Key methodologies",
+                    right_column="Real-World Applications:\n\n• Industry use cases\n• Success stories\n• Implementation examples\n• Best practices",
+                    layout=layout
+                ))
+            elif layout == SlideLayout.CONTENT_WITH_IMAGE:
+                slides.append(SlideContent(
+                    title=f"{topic} Implementation Strategy",
+                    content=f"Strategic approach to implementing {topic} in modern organizations",
+                    image_placeholder=f"{topic} implementation roadmap diagram showing phases and milestones",
+                    layout=layout
+                ))
+            else:  # Default to bullet points for unknown layouts
+                slides.append(SlideContent(
+                    title=f"Key Aspects of {topic}",
+                    bullet_points=[
+                        f"Important aspect 1 of {topic}",
+                        f"Important aspect 2 of {topic}",
+                        f"Important aspect 3 of {topic}",
+                        f"Important aspect 4 of {topic}"
+                    ],
                     layout=SlideLayout.BULLET_POINTS
                 ))
-            elif i == 2:
-                slides.append(SlideContent(
-                    title=f"Key Concepts of {topic}",
-                    left_column="Core Principles:\n\n• Fundamental concepts\n• Basic terminology\n• Essential frameworks",
-                    right_column="Applications:\n\n• Real-world examples\n• Industry use cases\n• Success stories",
-                    layout=SlideLayout.TWO_COLUMN
-                ))
-            elif i == 3:
-                slides.append(SlideContent(
-                    title=f"Advanced Topics in {topic}",
-                    content=f"Exploring advanced concepts and methodologies related to {topic}",
-                    image_placeholder="Diagram showing advanced concepts and relationships",
-                    layout=SlideLayout.CONTENT_WITH_IMAGE
-                ))
-        
-        # Add more slides if needed
-        for i in range(4, num_slides):
-            slides.append(SlideContent(
-                title=f"Slide {i+1}: {topic}",
-                bullet_points=[
-                    f"Point 1 about {topic}",
-                    f"Point 2 about {topic}",
-                    f"Point 3 about {topic}",
-                    f"Point 4 about {topic}"
-                ],
-                layout=SlideLayout.BULLET_POINTS
-            ))
         
         return slides[:num_slides] 

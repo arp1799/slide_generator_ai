@@ -134,28 +134,71 @@ class ImageGenerator:
     def _create_search_query(self, topic: str, slide_title: str, image_type: str) -> str:
         """Create an appropriate search query for image APIs"""
         
-        # Remove common words and create a focused search
+        # Clean and enhance the topic
         topic_clean = topic.replace("Artificial Intelligence", "AI").replace("Machine Learning", "ML")
         
-        if image_type == "concept":
-            return f"{topic_clean} concept"
-        elif image_type == "technology":
-            return f"{topic_clean} technology"
-        elif image_type == "business":
-            return f"{topic_clean} business"
-        elif image_type == "data":
-            return f"{topic_clean} data visualization"
+        # Extract key concepts from slide title
+        slide_keywords = self._extract_keywords_from_title(slide_title)
+        
+        # Create contextual search queries based on slide content
+        if "implementation" in slide_title.lower() or "strategy" in slide_title.lower():
+            return f"{topic_clean} implementation strategy roadmap diagram"
+        elif "technology" in slide_title.lower() or "application" in slide_title.lower():
+            return f"{topic_clean} technology applications diagram"
+        elif "understanding" in slide_title.lower() or "introduction" in slide_title.lower():
+            return f"{topic_clean} concept illustration diagram"
+        elif "ethics" in slide_title.lower() or "future" in slide_title.lower():
+            return f"{topic_clean} ethics future trends visualization"
+        elif "data" in slide_title.lower() or "analysis" in slide_title.lower():
+            return f"{topic_clean} data analysis visualization"
+        elif "business" in slide_title.lower() or "enterprise" in slide_title.lower():
+            return f"{topic_clean} business enterprise solution"
+        elif "workflow" in slide_title.lower() or "process" in slide_title.lower():
+            return f"{topic_clean} workflow process diagram"
+        elif "architecture" in slide_title.lower() or "system" in slide_title.lower():
+            return f"{topic_clean} architecture system diagram"
+        elif "trends" in slide_title.lower() or "development" in slide_title.lower():
+            return f"{topic_clean} trends development timeline"
+        elif "challenges" in slide_title.lower() or "problems" in slide_title.lower():
+            return f"{topic_clean} challenges solutions diagram"
         else:
-            return topic_clean
+            # Use slide keywords if available, otherwise fall back to topic
+            if slide_keywords:
+                return f"{topic_clean} {slide_keywords} diagram illustration"
+            else:
+                return f"{topic_clean} concept diagram"
+    
+    def _extract_keywords_from_title(self, slide_title: str) -> str:
+        """Extract relevant keywords from slide title for better image search"""
+        
+        # Remove common words and extract meaningful keywords
+        common_words = {
+            'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
+            'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
+            'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must', 'shall'
+        }
+        
+        # Split title into words and filter out common words
+        words = slide_title.lower().split()
+        keywords = [word for word in words if word not in common_words and len(word) > 2]
+        
+        # Take the most relevant keywords (first 3-4)
+        relevant_keywords = keywords[:4]
+        
+        return ' '.join(relevant_keywords)
     
     def get_image_suggestions(self, topic: str) -> List[str]:
         """Get image suggestions for a topic"""
         suggestions = [
-            f"Professional {topic} concept illustration",
-            f"{topic} technology diagram",
-            f"{topic} business application",
-            f"{topic} data visualization",
-            f"{topic} workflow diagram",
-            f"{topic} architecture diagram"
+            f"Professional {topic} concept illustration with modern design",
+            f"{topic} technology architecture diagram showing components",
+            f"{topic} business application workflow diagram",
+            f"{topic} data visualization with charts and graphs",
+            f"{topic} implementation roadmap with phases and milestones",
+            f"{topic} system architecture diagram with connections",
+            f"{topic} process flow diagram with decision points",
+            f"{topic} timeline showing development and evolution",
+            f"{topic} comparison chart showing different approaches",
+            f"{topic} infographic with key statistics and facts"
         ]
         return suggestions 
