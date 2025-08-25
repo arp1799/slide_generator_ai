@@ -18,7 +18,11 @@ class HuggingFaceGenerator:
             self.generator = None
             return
             
-        self.model_name = settings.huggingface_model  # Use model from settings
+        # Use better model if token is available, otherwise use lightweight model
+        if settings.huggingface_token:
+            self.model_name = "microsoft/DialoGPT-large"  # Better model with token
+        else:
+            self.model_name = settings.huggingface_model  # Lightweight model without token
         self.tokenizer = None
         self.model = None
         self.generator = None
