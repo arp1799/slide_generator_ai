@@ -17,11 +17,15 @@ from app.models.slide_models import (
 from app.services.content_generator import ContentGenerator
 from app.services.presentation_generator import PresentationGenerator
 from app.services.file_storage import file_storage
+from app.services.topic_data_service import TopicDataService
+from app.services.image_generator import ImageGenerator
 from app.core.config import settings
 
 router = APIRouter()
 content_generator = ContentGenerator()
 presentation_generator = PresentationGenerator()
+topic_data_service = TopicDataService()
+image_generator = ImageGenerator()
 
 
 @router.get("/health", response_model=HealthCheckResponse)
@@ -184,4 +188,126 @@ async def cleanup_expired_files():
 async def get_storage_stats():
     """Get storage statistics"""
     
-    return file_storage.get_storage_stats() 
+    return file_storage.get_storage_stats()
+
+
+# New endpoints for enhanced functionality
+
+@router.get("/topics")
+async def get_available_topics():
+    """Get list of available topics with comprehensive data"""
+    return {
+        "topics": topic_data_service.get_available_topics(),
+        "total_topics": len(topic_data_service.get_available_topics())
+    }
+
+
+@router.get("/topics/{topic_name}")
+async def get_topic_data(topic_name: str):
+    """Get comprehensive data for a specific topic"""
+    topic_data = topic_data_service.get_topic_data(topic_name)
+    
+    if not topic_data:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Topic '{topic_name}' not found"
+        )
+    
+    return {
+        "topic": topic_name,
+        "data": topic_data
+    }
+
+
+@router.get("/topics/{topic_name}/statistics")
+async def get_topic_statistics(topic_name: str):
+    """Get statistics for a specific topic"""
+    statistics = topic_data_service.get_topic_statistics(topic_name)
+    
+    return {
+        "topic": topic_name,
+        "statistics": statistics
+    }
+
+
+@router.get("/topics/{topic_name}/trends")
+async def get_topic_trends(topic_name: str):
+    """Get trends for a specific topic"""
+    trends = topic_data_service.get_topic_trends(topic_name)
+    
+    return {
+        "topic": topic_name,
+        "trends": trends
+    }
+
+
+@router.post("/generate-with-images")
+async def generate_presentation_with_images(request: SlideGenerationRequest):
+    """Generate a PowerPoint presentation with images"""
+    
+    start_time = time.time()
+    presentation_id = str(uuid.uuid4())
+    
+    try:
+        # Generate slide content
+        slides = await content_generator.generate_slide_content(
+            topic=request.topic,
+            num_slides=request.num_slides,
+            layout_preference=request.layout_preference
+        )
+        
+        # Add images to slides that need them
+        for slide in slides:
+            if slide.layout == SlideLayout.CONTENT_WITH_IMAGE and slide.image_placeholder:
+                image_url = await image_generator.generate_image_for_slide(
+                    topic=request.topic,
+                    slide_title=slide.title,
+                    image_type="concept"
+                )
+                if image_url:
+                    slide.image_url = image_url
+        
+        # Use custom content if provided
+        if request.custom_content:
+            slides = request.custom_content
+        
+        # Generate PowerPoint presentation
+        filename = presentation_generator.generate_presentation(
+            slides=slides,
+            theme=request.theme,
+            color_scheme=request.color_scheme,
+            font_settings=request.font_settings,
+            include_citations=request.include_citations
+        )
+        
+        # Save to file storage and get shareable link
+        file_path = os.path.join(settings.output_dir, filename)
+        storage_info = file_storage.save_presentation(file_path, filename)
+        
+        processing_time = time.time() - start_time
+        
+        return SlideGenerationResponse(
+            presentation_id=presentation_id,
+            filename=filename,
+            download_url=storage_info["download_url"],
+            message="Presentation with images generated successfully",
+            slides_generated=len(slides),
+            processing_time=round(processing_time, 2)
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating presentation with images: {str(e)}"
+        )
+
+
+@router.get("/image-suggestions/{topic}")
+async def get_image_suggestions(topic: str):
+    """Get image suggestions for a topic"""
+    suggestions = image_generator.get_image_suggestions(topic)
+    
+    return {
+        "topic": topic,
+        "suggestions": suggestions
+    } 
