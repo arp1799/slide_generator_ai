@@ -81,6 +81,25 @@ async def generate_presentation(request: SlideGenerationRequest):
         if request.custom_content:
             slides = request.custom_content
         
+        # Automatically generate images for slides with image placeholders
+        print("🖼️ Processing images for slides with placeholders...")
+        for i, slide in enumerate(slides):
+            if slide.image_placeholder and not slide.image_url:
+                print(f"   Generating image for slide {i+1}: {slide.title}")
+                try:
+                    image_url = await image_generator.generate_image_for_slide(
+                        topic=request.topic,
+                        slide_title=slide.title,
+                        image_type="concept"
+                    )
+                    if image_url:
+                        slide.image_url = image_url
+                        print(f"   ✅ Image generated: {image_url[:50]}...")
+                    else:
+                        print(f"   ⚠️ No image generated for slide {i+1}")
+                except Exception as e:
+                    print(f"   ❌ Error generating image for slide {i+1}: {e}")
+        
         # Generate PowerPoint presentation
         filename = presentation_generator.generate_presentation(
             slides=slides,
@@ -100,7 +119,7 @@ async def generate_presentation(request: SlideGenerationRequest):
             presentation_id=presentation_id,
             filename=filename,
             download_url=storage_info["download_url"],
-            message="Presentation generated successfully",
+            message="Presentation generated successfully with automatic image generation",
             slides_generated=len(slides),
             processing_time=round(processing_time, 2)
         )
@@ -253,65 +272,7 @@ async def get_topic_trends(topic_name: str):
     }
 
 
-@router.post("/generate-with-images")
-async def generate_presentation_with_images(request: SlideGenerationRequest):
-    """Generate a PowerPoint presentation with images"""
-    
-    start_time = time.time()
-    presentation_id = str(uuid.uuid4())
-    
-    try:
-        # Generate slide content
-        slides = await content_generator.generate_slide_content(
-            topic=request.topic,
-            num_slides=request.num_slides,
-            layout_preference=request.layout_preference
-        )
-        
-        # Add images to slides that need them
-        for slide in slides:
-            if slide.layout == SlideLayout.CONTENT_WITH_IMAGE and slide.image_placeholder:
-                image_url = await image_generator.generate_image_for_slide(
-                    topic=request.topic,
-                    slide_title=slide.title,
-                    image_type="concept"
-                )
-                if image_url:
-                    slide.image_url = image_url
-        
-        # Use custom content if provided
-        if request.custom_content:
-            slides = request.custom_content
-        
-        # Generate PowerPoint presentation
-        filename = presentation_generator.generate_presentation(
-            slides=slides,
-            theme=request.theme,
-            color_scheme=request.color_scheme,
-            font_settings=request.font_settings,
-            include_citations=request.include_citations
-        )
-        
-        # Save to file storage and get shareable link
-        file_path = os.path.join(settings.output_dir, filename)
-        storage_info = file_storage.save_presentation(file_path, filename)
-        
-        processing_time = time.time() - start_time
-        
-        return SlideGenerationResponse(
-            presentation_id=presentation_id,
-            filename=filename,
-            download_url=storage_info["download_url"],
-            message="Presentation with images generated successfully",
-            slides_generated=len(slides),
-            processing_time=round(processing_time, 2)
-        )
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error generating presentation with images: {str(e)}"
-        )
+
 
 
 @router.get("/image-suggestions/{topic}")
