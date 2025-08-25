@@ -10,15 +10,15 @@ from app.core.config import settings
 class ImageGenerator:
     def __init__(self):
         self.unsplash_access_key = os.getenv("UNSPLASH_ACCESS_KEY")
-        self.unsplash_access_token = os.getenv("UNSPLASH_ACCESS_TOKEN")
+        self.unsplash_secret_key = os.getenv("UNSPLASH_SECRET_KEY")
         self.pexels_api_key = os.getenv("PEXELS_API_KEY")
     
     async def generate_image_for_slide(self, topic: str, slide_title: str, image_type: str = "concept") -> Optional[str]:
         """Generate or fetch an appropriate image for a slide"""
         
         try:
-            # Try Unsplash first (with access token for better results)
-            if self.unsplash_access_key and self.unsplash_access_token:
+            # Try Unsplash first (with secret key for better results)
+            if self.unsplash_access_key and self.unsplash_secret_key:
                 image_url = await self._get_unsplash_image(topic, slide_title, image_type)
                 if image_url:
                     return image_url
@@ -49,7 +49,7 @@ class ImageGenerator:
                 "orientation": "landscape"
             }
             headers = {
-                "Authorization": f"Bearer {self.unsplash_access_token}"
+                "Authorization": f"Client-ID {self.unsplash_access_key}"
             }
             
             response = requests.get(url, params=params, headers=headers, timeout=10)
