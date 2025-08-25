@@ -12,9 +12,10 @@ Complete guide to deploy the Slide Generator API to GitHub and Render with downl
 - Sign up at https://render.com
 - Connect your GitHub account
 
-### **3. OpenAI API Key (Optional but Recommended)**
-- Get API key from https://platform.openai.com/
-- This enables real AI content generation
+### **3. API Keys (Optional but Recommended)**
+- **OpenAI API Key**: Get from https://platform.openai.com/
+- **Hugging Face Token**: Get from https://huggingface.co/settings/tokens
+- These enable real AI content generation (OpenAI primary, Hugging Face fallback)
 
 ## 🔧 Step-by-Step Deployment
 
@@ -73,6 +74,7 @@ In Render dashboard, go to **Environment** tab and add:
 ```env
 # Required for real content generation
 OPENAI_API_KEY=your_openai_api_key_here
+HUGGINGFACE_TOKEN=your_huggingface_token_here
 
 # Optional settings
 REDIS_URL=redis://localhost:6379

@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     # OpenAI Configuration
     openai_api_key: Optional[str] = None
     
+    # Hugging Face Configuration
+    huggingface_model: str = "microsoft/DialoGPT-medium"
+    huggingface_token: Optional[str] = None
+    
     # Redis Configuration (for caching)
     redis_url: str = "redis://localhost:6379"
     

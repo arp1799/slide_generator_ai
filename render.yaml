@@ -10,6 +10,8 @@ services:
         value: 3.9.16
       - key: OPENAI_API_KEY
         sync: false
+      - key: HUGGINGFACE_TOKEN
+        sync: false
       - key: REDIS_URL
         value: redis://localhost:6379
       - key: RATE_LIMIT_PER_MINUTE

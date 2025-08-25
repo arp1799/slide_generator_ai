@@ -9,6 +9,7 @@ except ImportError:
 from typing import List
 import json
 from app.models.slide_models import SlideLayout, SlideContent
+from app.core.config import settings
 
 
 class HuggingFaceGenerator:
@@ -17,7 +18,7 @@ class HuggingFaceGenerator:
             self.generator = None
             return
             
-        self.model_name = "microsoft/DialoGPT-medium"  # Lightweight model for quick responses
+        self.model_name = settings.huggingface_model  # Use model from settings
         self.tokenizer = None
         self.model = None
         self.generator = None
@@ -27,8 +28,15 @@ class HuggingFaceGenerator:
         """Load the Hugging Face model"""
         try:
             print("🔄 Loading Hugging Face model...")
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-            self.model = AutoModelForCausalLM.from_pretrained(self.model_name)
+            
+            # Use token if available
+            token = settings.huggingface_token
+            if token:
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, token=token)
+                self.model = AutoModelForCausalLM.from_pretrained(self.model_name, token=token)
+            else:
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+                self.model = AutoModelForCausalLM.from_pretrained(self.model_name)
             
             # Add padding token if not present
             if self.tokenizer.pad_token is None:
