@@ -16,9 +16,15 @@ from app.services.image_generator import ImageGenerator
 
 class HuggingFaceGenerator:
     def __init__(self):
-        # Initialize services (always available)
-        self.topic_data_service = TopicDataService()
-        self.image_generator = ImageGenerator()
+        try:
+            # Initialize services (always available)
+            self.topic_data_service = TopicDataService()
+            self.image_generator = ImageGenerator()
+        except Exception as e:
+            print(f"Error initializing services: {e}")
+            # Create dummy services as fallback
+            self.topic_data_service = None
+            self.image_generator = None
         
         if not TRANSFORMERS_AVAILABLE:
             self.generator = None
@@ -189,31 +195,59 @@ class HuggingFaceGenerator:
         
         slides = []
         
-        # Get topic data
-        topic_data = self.topic_data_service.get_topic_data(topic)
+        # Get topic data if service is available
+        if self.topic_data_service:
+            try:
+                topic_data = self.topic_data_service.get_topic_data(topic)
+            except Exception as e:
+                print(f"Error getting topic data: {e}")
+                topic_data = None
+        else:
+            topic_data = None
         
         # Title slide
-        slides.append(SlideContent(
-            title=f"{topic_data['title']} - Comprehensive Overview",
-            content=f"An in-depth exploration of {topic_data['title']} and its impact on modern technology and business",
-            layout=SlideLayout.TITLE
-        ))
-        
-        # Generate content slides from topic data
-        for i in range(1, min(num_slides, len(topic_data['slides']) + 1)):
-            if i <= len(topic_data['slides']):
-                slide_data = topic_data['slides'][i-1]
-                slide_content = self._create_slide_from_data(slide_data, topic)
-                slides.append(slide_content)
-            else:
-                # Additional slides with statistics and trends
+        if topic_data:
+            slides.append(SlideContent(
+                title=f"{topic_data['title']} - Comprehensive Overview",
+                content=f"An in-depth exploration of {topic_data['title']} and its impact on modern technology and business",
+                layout=SlideLayout.TITLE
+            ))
+            
+            # Generate content slides from topic data
+            for i in range(1, min(num_slides, len(topic_data['slides']) + 1)):
+                if i <= len(topic_data['slides']):
+                    slide_data = topic_data['slides'][i-1]
+                    slide_content = self._create_slide_from_data(slide_data, topic)
+                    slides.append(slide_content)
+                else:
+                    # Additional slides with statistics and trends
+                    slides.append(SlideContent(
+                        title=f"Market Insights: {topic_data['title']}",
+                        bullet_points=[
+                            f"Market Size: {topic_data['statistics'].get('market_size', 'Growing market')}",
+                            f"Key Players: {', '.join(topic_data['key_players'][:3])}",
+                            f"Emerging Trends: {', '.join(topic_data['trends'][:2])}",
+                            f"Future Outlook: Continued growth and innovation"
+                        ],
+                        layout=SlideLayout.BULLET_POINTS
+                    ))
+        else:
+            # Fallback to basic content if topic data is not available
+            slides.append(SlideContent(
+                title=f"{topic} - Presentation",
+                content=f"An overview of {topic}",
+                layout=SlideLayout.TITLE
+            ))
+            
+            # Generate basic content slides
+            for i in range(1, num_slides):
                 slides.append(SlideContent(
-                    title=f"Market Insights: {topic_data['title']}",
+                    title=f"Slide {i}: {topic}",
                     bullet_points=[
-                        f"Market Size: {topic_data['statistics'].get('market_size', 'Growing market')}",
-                        f"Key Players: {', '.join(topic_data['key_players'][:3])}",
-                        f"Emerging Trends: {', '.join(topic_data['trends'][:2])}",
-                        f"Future Outlook: Continued growth and innovation"
+                        f"First important point about {topic}",
+                        f"Second key aspect of {topic}",
+                        f"Third consideration for {topic}",
+                        f"Fourth benefit of {topic}"
                     ],
                     layout=SlideLayout.BULLET_POINTS
                 ))
