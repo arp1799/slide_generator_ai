@@ -38,6 +38,7 @@ class SlideContent(BaseModel):
     left_column: Optional[str] = None
     right_column: Optional[str] = None
     image_placeholder: Optional[str] = None
+    image_url: Optional[str] = None
     layout: SlideLayout
 
 
