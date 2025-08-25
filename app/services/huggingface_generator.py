@@ -16,6 +16,10 @@ from app.services.image_generator import ImageGenerator
 
 class HuggingFaceGenerator:
     def __init__(self):
+        # Initialize services (always available)
+        self.topic_data_service = TopicDataService()
+        self.image_generator = ImageGenerator()
+        
         if not TRANSFORMERS_AVAILABLE:
             self.generator = None
             return
@@ -29,10 +33,6 @@ class HuggingFaceGenerator:
         self.model = None
         self.generator = None
         self._load_model()
-        
-        # Initialize services
-        self.topic_data_service = TopicDataService()
-        self.image_generator = ImageGenerator()
     
     def _load_model(self):
         """Load the Hugging Face model"""
