@@ -179,7 +179,7 @@ class HuggingFaceGenerator:
         return bullet_points[:4]  # Return max 4 bullet points
     
     def _generate_mock_content(self, topic: str, num_slides: int, layout_preference: List[SlideLayout] = None) -> List[SlideContent]:
-        """Generate mock content as fallback"""
+        """Generate high-quality mock content based on topic"""
         
         layouts = layout_preference or [SlideLayout.TITLE, SlideLayout.BULLET_POINTS, SlideLayout.TWO_COLUMN]
         
@@ -187,50 +187,152 @@ class HuggingFaceGenerator:
         
         # Title slide
         slides.append(SlideContent(
-            title=f"{topic} - Presentation",
-            content=f"An overview of {topic}",
+            title=f"{topic} - Comprehensive Overview",
+            content=f"An in-depth exploration of {topic} and its impact on modern technology and business",
             layout=SlideLayout.TITLE
         ))
         
+        # Generate topic-specific content
+        topic_content = self._get_topic_specific_content(topic)
+        
         # Content slides
-        for i in range(1, min(num_slides, 4)):
-            if i == 1:
+        for i in range(1, min(num_slides, len(topic_content) + 1)):
+            if i <= len(topic_content):
+                slides.append(topic_content[i-1])
+            else:
+                # Fallback slides
                 slides.append(SlideContent(
-                    title=f"Introduction to {topic}",
+                    title=f"Additional Insights on {topic}",
                     bullet_points=[
-                        f"Definition and scope of {topic}",
-                        "Historical background and development",
-                        "Current trends and applications",
-                        "Future prospects and challenges"
+                        f"Emerging trends in {topic}",
+                        f"Industry best practices",
+                        f"Future developments and innovations",
+                        f"Strategic recommendations"
                     ],
                     layout=SlideLayout.BULLET_POINTS
                 ))
-            elif i == 2:
-                slides.append(SlideContent(
-                    title=f"Key Concepts of {topic}",
-                    left_column="Core Principles:\n\n• Fundamental concepts\n• Basic terminology\n• Essential frameworks",
-                    right_column="Applications:\n\n• Real-world examples\n• Industry use cases\n• Success stories",
+        
+        return slides[:num_slides]
+    
+    def _get_topic_specific_content(self, topic: str) -> List[SlideContent]:
+        """Generate topic-specific content based on common presentation topics"""
+        
+        topic_lower = topic.lower()
+        
+        # AI and Machine Learning topics
+        if any(keyword in topic_lower for keyword in ['ai', 'artificial intelligence', 'machine learning', 'ml']):
+            return [
+                SlideContent(
+                    title="Understanding Artificial Intelligence",
+                    bullet_points=[
+                        "Definition: AI systems that can perform tasks requiring human intelligence",
+                        "Types: Narrow AI (specific tasks) vs General AI (human-like intelligence)",
+                        "Key Technologies: Machine Learning, Deep Learning, Neural Networks",
+                        "Applications: Healthcare, Finance, Transportation, Entertainment"
+                    ],
+                    layout=SlideLayout.BULLET_POINTS
+                ),
+                SlideContent(
+                    title="AI Technologies and Applications",
+                    left_column="Core Technologies:\n\n• Machine Learning Algorithms\n• Deep Neural Networks\n• Natural Language Processing\n• Computer Vision",
+                    right_column="Industry Applications:\n\n• Healthcare: Diagnosis & Treatment\n• Finance: Fraud Detection\n• Transportation: Autonomous Vehicles\n• Retail: Personalized Shopping",
                     layout=SlideLayout.TWO_COLUMN
-                ))
-            elif i == 3:
-                slides.append(SlideContent(
-                    title=f"Advanced Topics in {topic}",
-                    content=f"Exploring advanced concepts and methodologies related to {topic}",
-                    image_placeholder="Diagram showing advanced concepts and relationships",
+                ),
+                SlideContent(
+                    title="AI Implementation Strategy",
+                    content="Strategic approach to implementing AI solutions in organizations",
+                    image_placeholder="AI implementation roadmap diagram",
                     layout=SlideLayout.CONTENT_WITH_IMAGE
-                ))
+                ),
+                SlideContent(
+                    title="AI Ethics and Future Trends",
+                    bullet_points=[
+                        "Ethical Considerations: Bias, Privacy, Transparency",
+                        "Regulatory Framework: Data Protection and AI Governance",
+                        "Future Trends: Quantum AI, Edge Computing, AI Democratization",
+                        "Challenges: Job Displacement, Security, Trust"
+                    ],
+                    layout=SlideLayout.BULLET_POINTS
+                )
+            ]
         
-        # Add more slides if needed
-        for i in range(4, num_slides):
-            slides.append(SlideContent(
-                title=f"Slide {i+1}: {topic}",
-                bullet_points=[
-                    f"Point 1 about {topic}",
-                    f"Point 2 about {topic}",
-                    f"Point 3 about {topic}",
-                    f"Point 4 about {topic}"
-                ],
-                layout=SlideLayout.BULLET_POINTS
-            ))
+        # Technology topics
+        elif any(keyword in topic_lower for keyword in ['technology', 'tech', 'digital', 'innovation']):
+            return [
+                SlideContent(
+                    title="Digital Transformation Overview",
+                    bullet_points=[
+                        "Definition: Integration of digital technology into all business areas",
+                        "Key Drivers: Customer expectations, competitive pressure, efficiency gains",
+                        "Technologies: Cloud Computing, IoT, Big Data, Mobile",
+                        "Benefits: Improved efficiency, better customer experience, cost reduction"
+                    ],
+                    layout=SlideLayout.BULLET_POINTS
+                ),
+                SlideContent(
+                    title="Technology Implementation Framework",
+                    left_column="Planning Phase:\n\n• Assessment & Strategy\n• Technology Selection\n• Resource Planning\n• Risk Management",
+                    right_column="Execution Phase:\n\n• Pilot Programs\n• Training & Adoption\n• Integration\n• Monitoring",
+                    layout=SlideLayout.TWO_COLUMN
+                ),
+                SlideContent(
+                    title="Emerging Technology Trends",
+                    content="Latest developments in technology that are shaping the future",
+                    image_placeholder="Technology trends timeline diagram",
+                    layout=SlideLayout.CONTENT_WITH_IMAGE
+                )
+            ]
         
-        return slides[:num_slides] 
+        # Business topics
+        elif any(keyword in topic_lower for keyword in ['business', 'strategy', 'management', 'leadership']):
+            return [
+                SlideContent(
+                    title="Strategic Business Planning",
+                    bullet_points=[
+                        "Vision and Mission: Clear organizational direction and purpose",
+                        "Market Analysis: Understanding competition and opportunities",
+                        "Resource Allocation: Optimal distribution of time, money, and talent",
+                        "Performance Metrics: KPIs and success measurement"
+                    ],
+                    layout=SlideLayout.BULLET_POINTS
+                ),
+                SlideContent(
+                    title="Business Strategy Framework",
+                    left_column="Internal Analysis:\n\n• Strengths & Weaknesses\n• Core Competencies\n• Resource Assessment\n• Organizational Culture",
+                    right_column="External Analysis:\n\n• Market Opportunities\n• Competitive Threats\n• Industry Trends\n• Regulatory Environment",
+                    layout=SlideLayout.TWO_COLUMN
+                ),
+                SlideContent(
+                    title="Leadership and Management",
+                    content="Effective leadership strategies for organizational success",
+                    image_placeholder="Leadership framework diagram",
+                    layout=SlideLayout.CONTENT_WITH_IMAGE
+                )
+            ]
+        
+        # Default content for other topics
+        else:
+            return [
+                SlideContent(
+                    title=f"Introduction to {topic}",
+                    bullet_points=[
+                        f"Definition and scope of {topic}",
+                        f"Historical development and evolution",
+                        f"Current applications and use cases",
+                        f"Future trends and opportunities"
+                    ],
+                    layout=SlideLayout.BULLET_POINTS
+                ),
+                SlideContent(
+                    title=f"{topic} Analysis",
+                    left_column=f"Key Concepts:\n\n• Fundamental principles\n• Core methodologies\n• Essential frameworks\n• Best practices",
+                    right_column=f"Applications:\n\n• Real-world examples\n• Industry implementations\n• Success stories\n• Case studies",
+                    layout=SlideLayout.TWO_COLUMN
+                ),
+                SlideContent(
+                    title=f"Advanced {topic} Topics",
+                    content=f"Exploring advanced concepts and methodologies in {topic}",
+                    image_placeholder=f"Advanced {topic} concepts diagram",
+                    layout=SlideLayout.CONTENT_WITH_IMAGE
+                )
+            ] 
