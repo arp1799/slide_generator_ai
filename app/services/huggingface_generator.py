@@ -72,7 +72,7 @@ class HuggingFaceGenerator:
                 layout=SlideLayout.TITLE
             ))
             
-            # Generate content slides
+            # Generate content slides with better prompts
             for i in range(1, min(num_slides, 6)):
                 slide_content = await self._generate_slide_text(topic, i, layouts[i % len(layouts)])
                 slides.append(slide_content)
@@ -95,13 +95,13 @@ class HuggingFaceGenerator:
         
         elif layout == SlideLayout.BULLET_POINTS:
             # Generate bullet points using the model
-            prompt = f"Create 4 bullet points about {topic}:"
+            prompt = f"Create 4 professional bullet points about {topic} for a business presentation:"
             try:
                 response = self.generator(
                     prompt,
-                    max_length=100,
+                    max_length=150,
                     num_return_sequences=1,
-                    temperature=0.7,
+                    temperature=0.8,
                     do_sample=True
                 )
                 
@@ -115,12 +115,12 @@ class HuggingFaceGenerator:
                     layout=layout
                 )
             except:
-                # Fallback bullet points
+                # Enhanced fallback bullet points
                 bullet_points = [
-                    f"Important aspect of {topic}",
-                    f"Key benefit of {topic}",
-                    f"Main consideration for {topic}",
-                    f"Future of {topic}"
+                    f"Understanding the fundamentals of {topic}",
+                    f"Key benefits and advantages of {topic}",
+                    f"Important considerations and challenges",
+                    f"Future trends and developments in {topic}"
                 ]
                 return SlideContent(
                     title=f"Key Points about {topic}",
@@ -131,8 +131,8 @@ class HuggingFaceGenerator:
         elif layout == SlideLayout.TWO_COLUMN:
             return SlideContent(
                 title=f"{topic} Analysis",
-                left_column=f"Advantages:\n\n• Benefit 1\n• Benefit 2\n• Benefit 3",
-                right_column=f"Considerations:\n\n• Point 1\n• Point 2\n• Point 3",
+                left_column=f"Advantages:\n\n• Enhanced efficiency and productivity\n• Cost-effective solutions\n• Improved user experience\n• Scalable implementation",
+                right_column=f"Considerations:\n\n• Implementation challenges\n• Resource requirements\n• Training and adoption\n• Maintenance and updates",
                 layout=layout
             )
         
