@@ -57,13 +57,25 @@ async def generate_presentation(request: SlideGenerationRequest):
     start_time = time.time()
     presentation_id = str(uuid.uuid4())
     
+    print(f"🎯 Starting presentation generation for topic: '{request.topic}'")
+    print(f"📊 Request details: {request.num_slides} slides, layouts: {request.layout_preference}")
+    
     try:
         # Generate slide content
+        print("🔄 Generating slide content...")
         slides = await content_generator.generate_slide_content(
             topic=request.topic,
             num_slides=request.num_slides,
             layout_preference=request.layout_preference
         )
+        
+        print(f"✅ Generated {len(slides)} slides:")
+        for i, slide in enumerate(slides):
+            print(f"   Slide {i+1}: {slide.title} (Layout: {slide.layout})")
+            if slide.bullet_points:
+                print(f"      Bullet points: {len(slide.bullet_points)} items")
+            if slide.image_placeholder:
+                print(f"      Image placeholder: {slide.image_placeholder}")
         
         # Use custom content if provided
         if request.custom_content:
