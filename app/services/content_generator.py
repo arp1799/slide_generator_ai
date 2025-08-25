@@ -1,4 +1,4 @@
-import openai
+from openai import OpenAI
 from typing import List, Dict, Any
 import json
 from app.core.config import settings
@@ -9,11 +9,14 @@ import os
 
 class ContentGenerator:
     def __init__(self):
+        self.openai_client = None
         if settings.openai_api_key:
-            openai.api_key = settings.openai_api_key
+            self.openai_client = OpenAI(api_key=settings.openai_api_key)
         else:
             # Fallback to environment variable
-            openai.api_key = openai.api_key or os.getenv("OPENAI_API_KEY")
+            api_key = os.getenv("OPENAI_API_KEY")
+            if api_key:
+                self.openai_client = OpenAI(api_key=api_key)
         
         # Initialize Hugging Face generator as fallback
         self.hf_generator = HuggingFaceGenerator()
@@ -21,7 +24,7 @@ class ContentGenerator:
     async def generate_slide_content(self, topic: str, num_slides: int, layout_preference: List[SlideLayout] = None) -> List[SlideContent]:
         """Generate slide content using OpenAI API"""
         
-        if not openai.api_key:
+        if not self.openai_client:
             # Fallback to Hugging Face model for demo purposes
             print("🔄 No OpenAI API key found, using Hugging Face model...")
             return await self.hf_generator.generate_slide_content(topic, num_slides, layout_preference)
@@ -30,7 +33,7 @@ class ContentGenerator:
             # Create a structured prompt for slide generation
             prompt = self._create_slide_prompt(topic, num_slides, layout_preference)
             
-            response = await openai.ChatCompletion.acreate(
+            response = self.openai_client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {

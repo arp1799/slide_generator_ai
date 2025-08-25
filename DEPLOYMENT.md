@@ -63,7 +63,7 @@ git push -u origin main
 5. **Configure the service**:
    - **Name**: `slide-generator-ai`
    - **Environment**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
+   - **Build Command**: `pip install -r requirements-render.txt`
    - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
    - **Plan**: Free (or paid for better performance)
 
