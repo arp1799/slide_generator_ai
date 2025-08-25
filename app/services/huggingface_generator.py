@@ -203,6 +203,16 @@ class HuggingFaceGenerator:
         
         slides = []
         
+        # Ensure we have layout preferences
+        layouts = layout_preference or [SlideLayout.TITLE, SlideLayout.BULLET_POINTS, SlideLayout.TWO_COLUMN]
+        
+        # Ensure we have enough layouts for the number of slides
+        available_layouts = layouts.copy()
+        if len(available_layouts) < num_slides:
+            # Cycle through available layouts
+            while len(available_layouts) < num_slides:
+                available_layouts.extend(layouts)
+        
         # Get topic data if service is available
         if self.topic_data_service:
             try:
@@ -214,62 +224,143 @@ class HuggingFaceGenerator:
         else:
             topic_data = None
         
-        # Title slide
+        # Title slide (always first)
         if topic_data:
             slides.append(SlideContent(
                 title=f"{topic_data['title']} - Comprehensive Overview",
                 content=f"An in-depth exploration of {topic_data['title']} and its impact on modern technology and business. This presentation covers key concepts, applications, market trends, and future developments in {topic_data['title'].lower()}.",
                 layout=SlideLayout.TITLE
             ))
-            
-            # Generate content slides from topic data
-            for i in range(1, min(num_slides, len(topic_data['slides']) + 1)):
-                if i <= len(topic_data['slides']):
-                    slide_data = topic_data['slides'][i-1]
-                    slide_content = self._create_slide_from_data(slide_data, topic)
-                    slides.append(slide_content)
-                else:
-                    # Additional slides with statistics and trends
-                    slides.append(SlideContent(
-                        title=f"Market Insights: {topic_data['title']}",
-                        bullet_points=[
-                            f"Market Size: {topic_data['statistics'].get('market_size', 'Growing market')}",
-                            f"Growth Rate: {topic_data['statistics'].get('growth_rate', 'Strong growth')}",
-                            f"Adoption Rate: {topic_data['statistics'].get('adoption_rate', 'Increasing adoption')}",
-                            f"Key Players: {', '.join(topic_data['key_players'][:3])}",
-                            f"Emerging Trends: {', '.join(topic_data['trends'][:2])}",
-                            f"Future Outlook: Continued growth and innovation",
-                            f"Investment: Significant venture capital and corporate investment",
-                            f"Regulation: Evolving regulatory frameworks and standards"
-                        ],
-                        layout=SlideLayout.BULLET_POINTS
-                    ))
         else:
-            # Fallback to basic content if topic data is not available
             slides.append(SlideContent(
                 title=f"{topic} - Comprehensive Presentation",
                 content=f"An in-depth overview of {topic} covering key concepts, applications, market trends, and future developments. This presentation provides valuable insights for understanding the current state and future potential of {topic.lower()}.",
                 layout=SlideLayout.TITLE
             ))
+        
+        # Generate content slides using layout preferences
+        for i in range(1, num_slides):
+            layout = available_layouts[i % len(available_layouts)]
             
-            # Generate basic content slides with more detailed content
-            for i in range(1, num_slides):
-                slides.append(SlideContent(
-                    title=f"Slide {i}: {topic} Analysis",
-                    bullet_points=[
-                        f"Core Concept: Fundamental understanding of {topic} principles and methodologies",
-                        f"Key Applications: Real-world use cases and industry implementations",
-                        f"Market Analysis: Current market size, growth trends, and competitive landscape",
-                        f"Technology Stack: Essential tools, frameworks, and platforms",
-                        f"Challenges & Solutions: Common obstacles and innovative approaches",
-                        f"Future Trends: Emerging developments and strategic opportunities",
-                        f"Best Practices: Industry standards and optimization strategies",
-                        f"ROI & Impact: Business value and measurable outcomes"
-                    ],
-                    layout=SlideLayout.BULLET_POINTS
-                ))
+            if layout == SlideLayout.BULLET_POINTS:
+                if topic_data and i <= len(topic_data['slides']):
+                    # Use topic data if available
+                    slide_data = topic_data['slides'][i-1]
+                    if slide_data['type'] == 'bullet_points':
+                        slide_content = self._create_slide_from_data(slide_data, topic)
+                        slide_content.layout = layout  # Ensure correct layout
+                        slides.append(slide_content)
+                    else:
+                        # Convert other slide types to bullet points
+                        slides.append(self._create_bullet_points_slide(topic_data, topic, i))
+                else:
+                    # Generate bullet points slide
+                    slides.append(self._create_bullet_points_slide(topic_data, topic, i))
+                    
+            elif layout == SlideLayout.TWO_COLUMN:
+                if topic_data and i <= len(topic_data['slides']):
+                    # Use topic data if available
+                    slide_data = topic_data['slides'][i-1]
+                    if slide_data['type'] == 'two_column':
+                        slide_content = self._create_slide_from_data(slide_data, topic)
+                        slide_content.layout = layout  # Ensure correct layout
+                        slides.append(slide_content)
+                    else:
+                        # Convert other slide types to two column
+                        slides.append(self._create_two_column_slide(topic_data, topic, i))
+                else:
+                    # Generate two column slide
+                    slides.append(self._create_two_column_slide(topic_data, topic, i))
+                    
+            elif layout == SlideLayout.CONTENT_WITH_IMAGE:
+                if topic_data and i <= len(topic_data['slides']):
+                    # Use topic data if available
+                    slide_data = topic_data['slides'][i-1]
+                    if slide_data['type'] == 'content_with_image':
+                        slide_content = self._create_slide_from_data(slide_data, topic)
+                        slide_content.layout = layout  # Ensure correct layout
+                        slides.append(slide_content)
+                    else:
+                        # Convert other slide types to content with image
+                        slides.append(self._create_content_with_image_slide(topic_data, topic, i))
+                else:
+                    # Generate content with image slide
+                    slides.append(self._create_content_with_image_slide(topic_data, topic, i))
+                    
+            else:
+                # Default to bullet points for unknown layouts
+                slides.append(self._create_bullet_points_slide(topic_data, topic, i))
         
         return slides[:num_slides]
+    
+    def _create_bullet_points_slide(self, topic_data: dict, topic: str, slide_index: int) -> SlideContent:
+        """Create a bullet points slide"""
+        if topic_data:
+            title = f"Understanding {topic_data['title']}"
+            bullet_points = [
+                f"Definition and scope of {topic_data['title']}",
+                f"Historical development and evolution",
+                f"Current applications and use cases",
+                f"Future trends and opportunities",
+                f"Key technologies and methodologies",
+                f"Industry impact and adoption",
+                f"Challenges and solutions",
+                f"Best practices and standards"
+            ]
+        else:
+            title = f"Key Aspects of {topic}"
+            bullet_points = [
+                f"Core Concept: Fundamental understanding of {topic} principles and methodologies",
+                f"Key Applications: Real-world use cases and industry implementations",
+                f"Market Analysis: Current market size, growth trends, and competitive landscape",
+                f"Technology Stack: Essential tools, frameworks, and platforms",
+                f"Challenges & Solutions: Common obstacles and innovative approaches",
+                f"Future Trends: Emerging developments and strategic opportunities",
+                f"Best Practices: Industry standards and optimization strategies",
+                f"ROI & Impact: Business value and measurable outcomes"
+            ]
+        
+        return SlideContent(
+            title=title,
+            bullet_points=bullet_points,
+            layout=SlideLayout.BULLET_POINTS
+        )
+    
+    def _create_two_column_slide(self, topic_data: dict, topic: str, slide_index: int) -> SlideContent:
+        """Create a two column slide"""
+        if topic_data:
+            title = f"{topic_data['title']} Technologies and Applications"
+            left_column = "Core Technologies:\n\n• Fundamental concepts\n• Basic terminology\n• Essential frameworks\n• Key methodologies\n• Technical standards\n• Development tools"
+            right_column = "Real-World Applications:\n\n• Industry use cases\n• Success stories\n• Implementation examples\n• Best practices\n• Case studies\n• Market applications"
+        else:
+            title = f"{topic} Analysis and Applications"
+            left_column = f"Key Concepts:\n\n• Fundamental principles\n• Core methodologies\n• Essential frameworks\n• Best practices\n• Technical standards\n• Development approaches"
+            right_column = f"Applications:\n\n• Real-world examples\n• Industry implementations\n• Success stories\n• Case studies\n• Market applications\n• Business value"
+        
+        return SlideContent(
+            title=title,
+            left_column=left_column,
+            right_column=right_column,
+            layout=SlideLayout.TWO_COLUMN
+        )
+    
+    def _create_content_with_image_slide(self, topic_data: dict, topic: str, slide_index: int) -> SlideContent:
+        """Create a content with image slide"""
+        if topic_data:
+            title = f"{topic_data['title']} Implementation Strategy"
+            content = f"Strategic approach to implementing {topic_data['title']} solutions in modern organizations"
+            image_placeholder = f"{topic_data['title']} implementation roadmap diagram showing phases and milestones"
+        else:
+            title = f"{topic} Implementation Strategy"
+            content = f"Strategic approach to implementing {topic} solutions in modern organizations"
+            image_placeholder = f"{topic} implementation roadmap diagram showing phases and milestones"
+        
+        return SlideContent(
+            title=title,
+            content=content,
+            image_placeholder=image_placeholder,
+            layout=SlideLayout.CONTENT_WITH_IMAGE
+        )
     
     def _create_slide_from_data(self, slide_data: dict, topic: str) -> SlideContent:
         """Create a slide from topic data with enhanced content and citations"""
